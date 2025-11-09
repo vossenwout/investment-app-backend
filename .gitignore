@@ -1,0 +1,9 @@
+.DS_Store
+node_modules/
+supabase/.branches/
+supabase/.temp/
+.env
+.env.local
+.env.production
+.env.test
+.supabase

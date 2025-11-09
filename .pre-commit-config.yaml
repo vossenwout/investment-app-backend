@@ -1,0 +1,23 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: deno-fmt
+        name: deno fmt
+        entry: deno fmt supabase/functions
+        language: system
+        pass_filenames: false
+      - id: deno-lint
+        name: deno lint
+        entry: deno lint supabase/functions
+        language: system
+        pass_filenames: false
+      - id: deno-test
+        name: deno test
+        entry: deno task test
+        language: system
+        pass_filenames: false
