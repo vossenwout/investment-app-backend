@@ -85,3 +85,8 @@ pre-commit run --all-files
 If any errors are found, fix them before finish your task.
 
 Never run git commit.
+
+
+#### Docs
+If you change something the frontend needs to know about, please update the docs in docs/docs.md accordingly.
+For example if an edge function gets added or changed add it there.
