@@ -57,7 +57,6 @@ Deno.test({
       assertEquals(quote.ticker, testTicker);
       assertExists(quote.last_price);
     } finally {
-      // Cleanup
       await client.from("asset_quotes").delete().eq("ticker", testTicker);
       await client.from("asset_tickers").delete().eq("ticker", testTicker);
     }

@@ -74,6 +74,15 @@ create table if not exists public.portfolio_metrics (
     updated_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.service_credentials (
+    service text primary key,
+    cookie text not null,
+    crumb text not null,
+    expires_at timestamptz not null,
+    created_at timestamptz not null default timezone('utc', now()),
+    updated_at timestamptz not null default timezone('utc', now())
+);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -219,12 +228,19 @@ before update on public.portfolio_metrics
 for each row
 execute function public.set_updated_at();
 
+drop trigger if exists service_credentials_set_updated_at on public.service_credentials;
+create trigger service_credentials_set_updated_at
+before update on public.service_credentials
+for each row
+execute function public.set_updated_at();
+
 alter table public.portfolios enable row level security;
 alter table public.portfolio_positions enable row level security;
 alter table public.asset_quotes enable row level security;
 alter table public.portfolio_metrics enable row level security;
 alter table public.asset_tickers enable row level security;
 alter table public.reference_tickers enable row level security;
+alter table public.service_credentials enable row level security;
 
 create policy "Users manage their portfolios"
 on public.portfolios
@@ -280,6 +296,12 @@ using (true);
 
 create policy "Service role manages reference tickers"
 on public.reference_tickers
+for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
+
+create policy "Service role manages service credentials"
+on public.service_credentials
 for all
 using (auth.role() = 'service_role')
 with check (auth.role() = 'service_role');

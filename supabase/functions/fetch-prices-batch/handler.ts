@@ -199,7 +199,7 @@ export async function handleFetchPricesBatch(
     const env = deps.env ?? Deno.env;
     const config = deps.config ?? resolveFetchBatchConfig(env);
     const client = deps.client ?? createServiceRoleClient(env);
-    const quoteProvider = deps.quoteProvider ?? new YahooFinanceQuoteProvider();
+    const quoteProvider = deps.quoteProvider ?? new YahooFinanceQuoteProvider({ client });
     const nowFactory = deps.now ?? (() => new Date());
 
     const tickers = await selectTickers(client, config);
