@@ -86,6 +86,7 @@ create table if not exists public.service_credentials (
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
     new.updated_at = timezone('utc', now());
@@ -96,6 +97,7 @@ $$;
 create or replace function public.ensure_asset_ticker_exists()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
     if new.ticker is null then
@@ -113,6 +115,7 @@ $$;
 create or replace function public.mark_metrics_stale_from_positions()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 declare
     target_portfolio uuid;
@@ -136,6 +139,7 @@ $$;
 create or replace function public.ensure_portfolio_metrics_row()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
     insert into public.portfolio_metrics (portfolio_id, stale, stale_reason)
@@ -149,6 +153,7 @@ create or replace function public.select_asset_tickers_for_fetch(p_batch_size in
 returns table(ticker text)
 language sql
 stable
+set search_path = public
 as $$
     select ticker
     from public.asset_tickers
@@ -166,6 +171,7 @@ create or replace function public.select_stale_portfolios(p_batch_size integer)
 returns table(portfolio_id uuid)
 language sql
 stable
+set search_path = public
 as $$
     select portfolio_id
     from public.portfolio_metrics

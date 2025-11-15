@@ -24,7 +24,13 @@ export function createServiceRoleClient(env: EnvReader = Deno.env): SupabaseClie
     throw new Error("Missing Supabase credentials");
   }
 
-  return createClient(url, serviceKey, { auth: { persistSession: false } });
+  return createClient(url, serviceKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
 }
 
 export function readIntFromEnv(
