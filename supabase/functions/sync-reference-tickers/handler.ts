@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "../_shared/supabase.ts";
 import { createServiceRoleClient, type EnvReader } from "../_shared/supabase.ts";
 
-const DEFAULT_NASDAQ_DIRECTORY_URL = "https://ftp.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt";
+const DEFAULT_NASDAQ_DIRECTORY_URL = "https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt";
 const DEFAULT_OTHERLISTED_DIRECTORY_URL =
-  "https://ftp.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt";
+  "https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt";
 const UPSERT_BATCH_SIZE = 500;
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" } as const;
 
@@ -14,7 +14,6 @@ export type ReferenceTicker = {
   asset_type: string | null;
   is_etf: boolean;
   source: string;
-  data: Record<string, unknown> | null;
 };
 
 export type ReferenceTickerUpsert = ReferenceTicker & {
@@ -30,21 +29,13 @@ export type HandlerDeps = {
 };
 
 const OTHER_EXCHANGE_MAP: Record<string, string> = {
-  "A": "NYSE MKT",
-  "B": "NASDAQ BX",
-  "N": "NYSE",
-  "P": "NYSE ARCA",
-  "Z": "Cboe BZX",
-  "V": "IEX",
+  A: "NYSE MKT",
+  B: "NASDAQ BX",
+  N: "NYSE",
+  P: "NYSE ARCA",
+  Z: "Cboe BZX",
+  V: "IEX",
 };
-
-function toNumberOrNull(value: string | undefined): number | null {
-  if (value === undefined || value === null || value.trim() === "") {
-    return null;
-  }
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
 
 function response(status: number, payload: Record<string, unknown>): Response {
   return new Response(JSON.stringify(payload), { status, headers: JSON_HEADERS });
@@ -68,10 +59,10 @@ export function parseNasdaqDirectory(text: string): ReferenceTicker[] {
     const [
       symbol,
       securityName,
-      marketCategory,
+      _marketCategory,
       testIssue,
-      financialStatus,
-      roundLotSize,
+      _financialStatus,
+      _roundLotSize,
       etfFlag,
       nextSharesFlag,
     ] = row;
@@ -89,11 +80,6 @@ export function parseNasdaqDirectory(text: string): ReferenceTicker[] {
       asset_type: assetType,
       is_etf: etfFlag === "Y",
       source: "nasdaq_directory",
-      data: {
-        marketCategory: marketCategory ?? null,
-        financialStatus: financialStatus ?? null,
-        roundLotSize: toNumberOrNull(roundLotSize),
-      },
     });
   }
 
@@ -117,7 +103,7 @@ export function parseOtherListedDirectory(text: string): ReferenceTicker[] {
       exchangeCode,
       cqsSymbol,
       etfFlag,
-      roundLot,
+      _roundLot,
       testIssue,
       nasdaqSymbol,
     ] = row;
@@ -133,21 +119,13 @@ export function parseOtherListedDirectory(text: string): ReferenceTicker[] {
       asset_type: etfFlag === "Y" ? "ETF" : "EQUITY",
       is_etf: etfFlag === "Y",
       source: "otherlisted_directory",
-      data: {
-        actSymbol: actSymbol ?? null,
-        cqsSymbol: cqsSymbol ?? null,
-        nasdaqSymbol: nasdaqSymbol ?? null,
-        roundLotSize: toNumberOrNull(roundLot),
-      },
     });
   }
 
   return result;
 }
 
-export function mergeDirectoryTickers(
-  ...lists: ReferenceTicker[][]
-): ReferenceTicker[] {
+export function mergeDirectoryTickers(...lists: ReferenceTicker[][]): ReferenceTicker[] {
   const map = new Map<string, ReferenceTicker>();
   for (const list of lists) {
     for (const entry of list) {

@@ -30,7 +30,6 @@ create table if not exists public.reference_tickers (
     is_active boolean not null default true,
     last_seen_at timestamptz not null default timezone('utc', now()),
     source text not null default 'nasdaq_directory',
-    data jsonb,
     created_at timestamptz not null default timezone('utc', now()),
     updated_at timestamptz not null default timezone('utc', now())
 );

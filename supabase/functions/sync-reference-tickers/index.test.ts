@@ -21,7 +21,6 @@ File Creation Time: 20240101|`;
   assertEquals(entry.exchange, "NASDAQ");
   assertEquals(entry.asset_type, "EQUITY");
   assertEquals(entry.is_etf, false);
-  assertEquals(entry.data?.roundLotSize, 100);
 });
 
 Deno.test("parseOtherListedDirectory normalizes symbols and ignores test issues", () => {
@@ -37,7 +36,6 @@ File Creation Time: 20240101|`;
   assertEquals(entry.ticker, "BRK.B");
   assertEquals(entry.exchange, "NYSE");
   assertEquals(entry.asset_type, "EQUITY");
-  assertEquals(entry.data?.roundLotSize, 1);
 });
 
 Deno.test("mergeDirectoryTickers keeps first occurrence of ticker", () => {
@@ -48,7 +46,6 @@ Deno.test("mergeDirectoryTickers keeps first occurrence of ticker", () => {
     asset_type: "EQUITY",
     is_etf: false,
     source: "nasdaq_directory",
-    data: null,
   }];
   const other = [{
     ticker: "AAPL",
@@ -57,7 +54,6 @@ Deno.test("mergeDirectoryTickers keeps first occurrence of ticker", () => {
     asset_type: "EQUITY",
     is_etf: false,
     source: "otherlisted_directory",
-    data: null,
   }];
 
   const merged = mergeDirectoryTickers(nasdaq, other);
