@@ -1,15 +1,21 @@
 # Investment App
 
-Supabase backend for an investment tracking app.
+Supabase backend for an investment tracking app. The goal of the investment app is not to offer realtime tracking, but instead
+advanced analytics (alpha, beta, sharpe ratio, risk, correlation etc) on investment portfolios over time.
 
 ### Rules
 
 #### Edge Functions
 
-- Use **Supabase Edge Functions** for all backend tasks such as:
-  - Fetching prices
-  - Calculating metrics
-  - Performing other computations...
+- Use Supabase Edge Functions for all backend or privileged tasks, such as:
+  - Fetching or updating asset prices from external APIs (e.g. Yahoo Finance)
+  - Recalculating portfolio metrics (total value, alpha, beta, etc.)
+  - Performing background computations or batch processing
+  - Any logic requiring the Service Role Key or access beyond a single user
+
+- Other CRUD operations should be done directly using Supabase database calls for all simple, user-owned operations, such as:
+  - Adding, Reading, Updating portfolio positions
+  - These operations rely on Row Level Security (RLS) to ensure users can only access their own data.
 
 #### Local Development
 
@@ -23,9 +29,16 @@ Supabase backend for an investment tracking app.
 
 - Use **pre-commit hooks** to automatically format, lint, and run tests before committing code.
 
-#### Language
+#### Database Migrations
 
-- Write all Edge Functions in **TypeScript**.
+- **This project is in early development with nothing in production yet.**
+- **Do NOT use ALTER TABLE statements** during development—only modify the CREATE TABLE statements in the original migration files.
+- Group logical changes into single migration files for clarity and maintainability.
+- If you need to create new migration file use `supabase migration new <migration name>`
+
+#### Free tier
+
+- Try to stay within the free tier limits of Supabase to avoid incurring costs. (500 000 function invocations per month, 500 MB DB, 1 GB storage etc)
 
 #### Package Management
 
@@ -87,6 +100,5 @@ If any errors are found, fix them before finish your task.
 Never run git commit.
 
 
-#### Docs
-If you change something the frontend needs to know about, please update the docs in docs/docs.md accordingly.
-For example if an edge function gets added or changed add it there.
+#### README.md
+Never modify the README.md file unless I explicitly ask you to, just tell me directly what you changed or what I should run.

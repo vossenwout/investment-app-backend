@@ -56,9 +56,11 @@ This repository hosts the Supabase backend for the investment app. It is designe
 ├── supabase/
 │   ├── config.toml            # Local Supabase stack configuration
 │   ├── functions/
+│   │   ├── _shared/               # Shared Supabase helpers
 │   │   ├── health/                # Read-only health check function + tests
-│   │   ├── demo-write/            # Demo function that persists records into Postgres
-│   │   └── portfolio-positions/   # Authenticated add/remove holdings API
+│   │   ├── fetch-prices-batch/    # Cron job that refreshes asset quotes
+│   │   └── recalc-metrics-batch/  # Cron job that recomputes portfolio analytics
+│   ├── scripts/                   # Local helpers for invoking cron-like functions
 │   ├── migrations/                # Database change scripts
 │   └── seed/seed.sql              # Optional bootstrap data
 ├── deno.jsonc                 # Shared Deno tasks & lint config
@@ -68,34 +70,32 @@ This repository hosts the Supabase backend for the investment app. It is designe
 
 ## Workflow Notes
 
-- Use Edge Functions (TypeScript on Deno) for backend tasks such as fetching prices and computing metrics.
+- Use Edge Functions (TypeScript on Deno) only for cron/batch tasks such as refreshing prices and recomputing metrics; user CRUD flows rely on direct Supabase client calls protected by RLS.
+
+## Local cron helpers
+
+`supabase/scripts/run-cron.ts` is a small Deno script that loads `.env.local` (or the file specified via `ENV_FILE`) and POSTs to the cron-oriented Edge Functions. It saves you from copying curl commands or pasting secrets by hand.
+
+1. Start the local stack: `supabase start`.
+2. Serve Edge Functions so the runtime can reach your database: `supabase functions serve --env-file .env.local --no-verify-jwt`.
+3. In a new terminal, invoke whichever batch you want:
+   ```bash
+   deno run -A supabase/scripts/run-cron.ts fetch-prices-batch
+   deno run -A supabase/scripts/run-cron.ts recalc-metrics-batch
+   ```
+
+The script looks for `SERVICE_ROLE_KEY` and `API_URL` in the environment. If they are missing it automatically loads `.env.local`; override with `ENV_FILE=some.env deno run ...` or by exporting the variables yourself. Successful responses are printed as pretty JSON, and a non-200 status exits with code 1 so you can wire it into your own scheduler if desired.
+
+### Scheduling in production
+
+Because the Supabase CLI doesn’t expose cron commands yet, create schedules via the Supabase Dashboard:
+
+1. Deploy the Edge Functions and set `SUPABASE_URL`, `SERVICE_ROLE_KEY`, and any batch-size env vars under **Settings → API → Functions → Environment Variables**.
+2. Open **Edge Functions → (select function) → Add schedule**.
+3. Enter the cron expression (e.g., `*/10 * * * *`), method `POST`, path `/functions/v1/fetch-prices-batch`, and header `Authorization: Bearer <SERVICE_ROLE_KEY>`. Repeat for `recalc-metrics-batch`.
+4. Use the `run-cron.ts` helper locally anytime you need to reproduce what the hosted scheduler will do before changing the cadence or batch size.
 - Keep migrations in `supabase/migrations` so the CLI can replay them in CI.
 - Update `supabase/seed/seed.sql` whenever the app relies on reference data.
 - Run `pre-commit install` to ensure formatting, linting, and tests run prior to every commit.
-
-## Portfolio + Position Management
-
-- Migration `202411101500_create_portfolios.sql` adds `portfolios` (owned by an auth user) and `portfolio_positions` (per-ticker holdings) with strict RLS policies so users only touch their own rows.
-- `supabase/functions/portfolio-positions` exposes an Edge Function that requires a Firebase/Supabase bearer token and supports `POST` (add/update) and `DELETE` (remove) requests.
-- Frontend flow: call the function via `fetch('/functions/v1/portfolio-positions', { method: 'POST', headers: { Authorization: \`Bearer ${session.access_token}\` } ... })`, then optimistically update the UI and trigger any analytics refresh.
-- Example request to add or update a holding:
-
-  ```bash
-  curl -X POST \
-    -H "Authorization: Bearer <user access token>" \
-    -H "content-type: application/json" \
-    -d '{"portfolioId":"<uuid>","ticker":"AAPL","quantity":5,"costBasis":170.25,"notes":"Core position"}' \
-    http://127.0.0.1:54321/functions/v1/portfolio-positions
-  ```
-
-- Remove a holding:
-
-  ```bash
-  curl -X DELETE \
-    -H "Authorization: Bearer <user access token>" \
-    -H "content-type: application/json" \
-    -d '{"portfolioId":"<uuid>","ticker":"AAPL"}' \
-    http://127.0.0.1:54321/functions/v1/portfolio-positions
-  ```
 
 Remember to run `supabase db reset` after pulling schema changes so the new tables and demo data are available locally.
