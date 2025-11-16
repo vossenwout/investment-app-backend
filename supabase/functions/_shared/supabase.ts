@@ -12,14 +12,8 @@ export type IntOptions = {
 
 export function createServiceRoleClient(env: EnvReader = Deno.env): SupabaseClient {
   // Check non-Docker URLs first, then fall back to Docker URLs
-  const url = env.get("API_URL") ??
-    env.get("SUPABASE_URL") ??
-    env.get("EDGE_FUNCTION_API_URL") ??
-    env.get("EDGE_FUNCTION_SUPABASE_URL");
-  const serviceKey = env.get("SERVICE_ROLE_KEY") ??
-    env.get("SUPABASE_SERVICE_ROLE_KEY") ??
-    env.get("EDGE_FUNCTION_SERVICE_ROLE_KEY");
-
+  const url = env.get("SUPABASE_URL") ?? env.get("EDGE_FUNCTION_API_URL");
+  const serviceKey = env.get("SERVICE_ROLE_KEY") ?? env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !serviceKey) {
     throw new Error("Missing Supabase credentials");
   }
