@@ -282,7 +282,6 @@ email_optional = false
 enabled = true
 client_id = "842293656522-o7ku50c1vgl6vh98p7rpi7ruu6q3unnc.apps.googleusercontent.com"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET)"
-#redirect_uri = "http://localhost:3000/auth/v1/callback"
 skip_nonce_check = false
 
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.
