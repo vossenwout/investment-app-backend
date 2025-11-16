@@ -111,6 +111,35 @@ begin
 end;
 $$;
 
+create or replace function public.validate_reference_ticker()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+    normalized_ticker text;
+begin
+    if new.ticker is null then
+        return new;
+    end if;
+
+    normalized_ticker := upper(new.ticker);
+
+    if not exists (
+        select 1
+        from public.reference_tickers
+        where ticker = normalized_ticker
+          and is_active = true
+    ) then
+        raise exception 'Ticker % not found in reference catalog', new.ticker
+            using errcode = '23514';
+    end if;
+
+    new.ticker := normalized_ticker;
+    return new;
+end;
+$$;
+
 create or replace function public.mark_metrics_stale_from_positions()
 returns trigger
 language plpgsql
@@ -202,6 +231,12 @@ create trigger portfolio_positions_set_updated_at
 before update on public.portfolio_positions
 for each row
 execute function public.set_updated_at();
+
+drop trigger if exists portfolio_positions_check_reference_ticker on public.portfolio_positions;
+create trigger portfolio_positions_check_reference_ticker
+before insert or update on public.portfolio_positions
+for each row
+execute function public.validate_reference_ticker();
 
 drop trigger if exists portfolio_positions_ensure_ticker on public.portfolio_positions;
 create trigger portfolio_positions_ensure_ticker
