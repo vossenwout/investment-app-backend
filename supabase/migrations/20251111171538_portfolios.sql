@@ -96,6 +96,7 @@ $$;
 create or replace function public.ensure_asset_ticker_exists()
 returns trigger
 language plpgsql
+security definer
 set search_path = public
 as $$
 begin
