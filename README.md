@@ -82,6 +82,7 @@ This repository hosts the Supabase backend for the investment app. It is designe
    ```bash
    deno run -A supabase/scripts/run-cron.ts fetch-prices-batch
    deno run -A supabase/scripts/run-cron.ts recalc-metrics-batch
+   deno run -A supabase/scripts/run-cron.ts sync-reference-tickers
    ```
 
 The script looks for `SERVICE_ROLE_KEY` and `API_URL` in the environment. If they are missing it automatically loads `.env.local`; override with `ENV_FILE=some.env deno run ...` or by exporting the variables yourself. Successful responses are printed as pretty JSON, and a non-200 status exits with code 1 so you can wire it into your own scheduler if desired.

@@ -143,6 +143,7 @@ $$;
 create or replace function public.mark_metrics_stale_from_positions()
 returns trigger
 language plpgsql
+security definer
 set search_path = public
 as $$
 declare
@@ -167,6 +168,7 @@ $$;
 create or replace function public.ensure_portfolio_metrics_row()
 returns trigger
 language plpgsql
+security definer
 set search_path = public
 as $$
 begin
@@ -206,6 +208,27 @@ as $$
     where stale = true
     order by updated_at nulls first
     limit greatest(coalesce(p_batch_size, 1), 1);
+$$;
+
+create or replace function public.set_portfolio_owner_from_auth()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+    user_id uuid := auth.uid();
+begin
+    if new.owner_id is not null then
+        return new;
+    end if;
+
+    if user_id is null then
+        raise exception 'Cannot infer owner_id without auth context';
+    end if;
+
+    new.owner_id := user_id;
+    return new;
+end;
 $$;
 
 drop trigger if exists asset_tickers_set_updated_at on public.asset_tickers;
@@ -273,6 +296,13 @@ create trigger service_credentials_set_updated_at
 before update on public.service_credentials
 for each row
 execute function public.set_updated_at();
+
+drop trigger if exists portfolios_set_owner_id on public.portfolios;
+create trigger portfolios_set_owner_id
+before insert on public.portfolios
+for each row
+execute function public.set_portfolio_owner_from_auth();
+
 
 alter table public.portfolios enable row level security;
 alter table public.portfolio_positions enable row level security;
